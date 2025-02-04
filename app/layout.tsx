@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 
 import { DeepgramContextProvider } from "./context/DeepgramContextProvider";
 import { MicrophoneContextProvider } from "./context/MicrophoneContextProvider";
+import AIAgentContextProvider from "./context/AIAgentContextProvider";
 
 import "./globals.css";
 
@@ -46,7 +47,11 @@ export default function RootLayout({
         )}`}
       >
         <MicrophoneContextProvider>
-          <DeepgramContextProvider>{children}</DeepgramContextProvider>
+          <DeepgramContextProvider>
+            <AIAgentContextProvider>
+              {children}
+            </AIAgentContextProvider>
+          </DeepgramContextProvider>
         </MicrophoneContextProvider>
       </body>
     </html>
