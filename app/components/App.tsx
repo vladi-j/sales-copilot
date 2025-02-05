@@ -15,12 +15,16 @@ import {
 import { useAIAgent } from "../context/AIAgentContextProvider";
 import { InitialMeetingForm } from './InitialMeetingForm';
 import { InitialMeetingData } from '../types/forms';
+import { correctLatvianText } from '../services/textCorrection';
+import { TextCorrectionToggle } from "./TextCorrectionToggle";
 
 // Add this type definition near the top of the file
 type Message = {
   text: string;
   isAI: boolean;
   timestamp: Date;
+  isOriginalStt?: boolean;
+  isCorrected?: boolean;
 };
 
 const App: () => JSX.Element = () => {
@@ -36,6 +40,7 @@ const App: () => JSX.Element = () => {
   const { processText, isProcessing, clearConversation, setInitialMeetingData } = useAIAgent();
   const [messages, setMessages] = useState<Message[]>([]);
   const [showForm, setShowForm] = useState(true);
+  const [useTextCorrection, setUseTextCorrection] = useState(false);
 
   const startConversation = async () => {
     await setupMicrophone();
@@ -76,18 +81,34 @@ const App: () => JSX.Element = () => {
     }
     
     // Store the current text
-    const textToSend = accumulatedText.trim();
+    let textToSend = accumulatedText.trim();
     setAccumulatedText("");
     
-    // Add user message
+    // Add original STT message
     const userMessage: Message = {
       text: textToSend,
       isAI: false,
-      timestamp: new Date()
+      timestamp: new Date(),
+      isOriginalStt: true // Add this flag to style original STT differently
     };
     setMessages(prev => [...prev, userMessage]);
     
     try {
+      // If text correction is enabled, process the text first
+      if (useTextCorrection) {
+        const correctedText = await correctLatvianText(textToSend);
+        textToSend = correctedText;
+        
+        // Add corrected message
+        const correctedMessage: Message = {
+          text: correctedText,
+          isAI: false,
+          timestamp: new Date(),
+          isCorrected: true // Add this flag to style corrections differently
+        };
+        setMessages(prev => [...prev, correctedMessage]);
+      }
+      
       const response = await processText(textToSend);
       // Add AI response
       const aiMessage: Message = {
@@ -225,9 +246,15 @@ const App: () => JSX.Element = () => {
                 </button>
               )}
             </div>
+            {!isConversationActive && (
+              <TextCorrectionToggle
+                checked={useTextCorrection}
+                onChange={setUseTextCorrection}
+              />
+            )}
             <div className="relative w-full h-full">
               <div className="absolute bottom-[8rem] inset-x-0 max-w-4xl mx-auto text-center">
-                {caption && <span className="bg-black/70 p-8">{caption}</span>}
+                {isConversationActive && caption && <span className="bg-black/70 p-8">{caption}</span>}
               </div>
             </div>
             {isConversationActive && (
@@ -243,12 +270,22 @@ const App: () => JSX.Element = () => {
                         className={`max-w-[80%] rounded-lg p-4 ${
                           message.isAI
                             ? 'bg-gray-700 text-white'
-                            : 'bg-blue-600 text-white'
+                            : message.isOriginalStt && useTextCorrection
+                              ? 'bg-orange-700 text-white'
+                              : message.isCorrected
+                                ? 'bg-green-600 text-white'
+                                : 'bg-blue-600 text-white'
                         }`}
                       >
                         <pre className="whitespace-pre-wrap font-sans">{message.text}</pre>
                         <div className={`text-xs mt-1 ${
-                          message.isAI ? 'text-gray-400' : 'text-blue-200'
+                          message.isAI 
+                            ? 'text-gray-400' 
+                            : message.isOriginalStt && useTextCorrection
+                              ? 'text-orange-200'
+                              : message.isCorrected
+                                ? 'text-green-200'
+                                : 'text-blue-200'
                         }`}>
                           {message.timestamp.toLocaleTimeString()}
                         </div>
