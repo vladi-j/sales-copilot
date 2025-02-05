@@ -12,8 +12,9 @@ import {
   MicrophoneState,
   useMicrophone,
 } from "../context/MicrophoneContextProvider";
-import Visualizer from "./Visualizer";
 import { useAIAgent } from "../context/AIAgentContextProvider";
+import { InitialMeetingForm } from './InitialMeetingForm';
+import { InitialMeetingData } from '../types/forms';
 
 // Add this type definition near the top of the file
 type Message = {
@@ -32,8 +33,9 @@ const App: () => JSX.Element = () => {
     useMicrophone();
   const captionTimeout = useRef<any>();
   const keepAliveInterval = useRef<any>();
-  const { processText, isProcessing } = useAIAgent();
+  const { processText, isProcessing, clearConversation, setInitialMeetingData } = useAIAgent();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [showForm, setShowForm] = useState(true);
 
   const startConversation = async () => {
     await setupMicrophone();
@@ -97,6 +99,17 @@ const App: () => JSX.Element = () => {
     } catch (error) {
       console.error("Error processing text:", error);
     }
+  };
+
+  const handleFormSubmit = (data: InitialMeetingData) => {
+    setInitialMeetingData(data);
+    setShowForm(false);
+    startConversation();
+  };
+
+  const handleFormSkip = () => {
+    setShowForm(false);
+    startConversation();
   };
 
   useEffect(() => {
@@ -276,6 +289,13 @@ const App: () => JSX.Element = () => {
                 </div>
               </div>
             )}
+
+            {!isConversationActive && showForm ? (
+              <InitialMeetingForm
+                onSubmit={handleFormSubmit}
+                onSkip={handleFormSkip}
+              />
+            ) : null}
           </div>
         </div>
       </div>

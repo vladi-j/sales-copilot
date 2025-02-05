@@ -12,11 +12,13 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { BufferMemory } from "langchain/memory";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { AIAgentSystemConfig } from "./AIAgentSystemConfig.config";
+import { InitialMeetingData } from "../types/forms";
 
 interface AIAgentContextType {
   processText: (text: string) => Promise<string>;
   isProcessing: boolean;
   clearConversation: () => void;
+  setInitialMeetingData: (data: InitialMeetingData) => void;
 } 
 
 const AIAgentContext = createContext<AIAgentContextType | undefined>(undefined);
@@ -44,6 +46,7 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
 }) => {
   const [chain, setChain] = useState<ConversationChain | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [initialMeetingData, setInitialMeetingData] = useState<InitialMeetingData | null>(null);
 
   const initializeChain = async () => {
     if (chain) return chain;
@@ -62,11 +65,38 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
         inputKey: "input",
         outputKey: "response"
     });
+
+    // Create initial system message with meeting data if available
+    let systemPrompt = AIAgentSystemConfig;
+    if (initialMeetingData) {
+      systemPrompt += `\n\nClient Information:
+      Name: ${initialMeetingData.ownerFirstName || 'Not provided'} ${initialMeetingData.ownerLastName || ''}
+      Pronouns: ${initialMeetingData.ownerPronouns || 'Not provided'}
+
+      Initial Meeting Information:
+      Website Creation/Update: ${initialMeetingData.websiteCreationDate || 'Not provided'}
+      Original Website Goal: ${initialMeetingData.websiteGoal || 'Not provided'}
+      Industry Situation: ${initialMeetingData.industrySituation || 'Not provided'}
+      Monthly Clients: ${initialMeetingData.monthlyClients || 'Not provided'}
+      Year-over-Year Comparison: ${initialMeetingData.yearComparison || 'Not provided'}
+      Audit Insights: ${initialMeetingData.auditInsights || 'Not provided'}
+      Main Website Purpose: ${initialMeetingData.websitePurpose || 'Not provided'}
+      Desired Improvements: ${initialMeetingData.improvementWishes || 'Not provided'}
+      Target Group: ${initialMeetingData.targetGroup || 'Not provided'}
+      Online Target Audience: ${initialMeetingData.onlineTargetAudience || 'Not provided'}
+      Missing Features: ${initialMeetingData.missingFeatures || 'Not provided'}
+      Planned Updates: ${initialMeetingData.plannedUpdates || 'Not provided'}
+      Google Search Interest: ${initialMeetingData.googleSearchInterest || 'Not provided'}
+      
+      Additional Information about the client:
+      ${initialMeetingData.otherInformation || 'Not provided'}`;
+    }
+
     const newChain = new ConversationChain({
-    llm: chat,
-    memory: memory,
-    prompt: new PromptTemplate({
-        template: `${AIAgentSystemConfig}
+      llm: chat,
+      memory: memory,
+      prompt: new PromptTemplate({
+        template: `${systemPrompt}
 
         Previous conversation:
         {history}
@@ -74,7 +104,7 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
         Human: {input}
         Assistant:`,
         inputVariables: ["history", "input"],
-    }),
+      }),
     });
 
     setChain(newChain);
@@ -107,6 +137,7 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
         processText,
         isProcessing,
         clearConversation,
+        setInitialMeetingData,
       }}
     >
       {children}

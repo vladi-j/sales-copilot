@@ -227,4 +227,6 @@ Output:
                                           5. ✗ No unnecessary explanations
                                           3. Structure
                                           1. Respond in a way you would say it yourself to the client - do not add unnecessary text
+                                          2. Use Name of the client if provided
+                                          3. Add a tone of voice to use at the beginning of each sentence. Add it in square brackets.
 `
