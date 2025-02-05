@@ -13,6 +13,7 @@ import { BufferMemory } from "langchain/memory";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { AIAgentSystemConfig } from "./AIAgentSystemConfig.config";
 import { InitialMeetingData } from "../types/forms";
+import { getAnthropicKey } from "../util/getAnthropicKey";
 
 interface AIAgentContextType {
   processText: (text: string) => Promise<string>;
@@ -34,12 +35,6 @@ export const useAIAgent = () => {
 interface AIAgentContextProviderProps {
   children: ReactNode;
 }
-
-const getAnthropicKey = async (): Promise<string> => {
-  const response = await fetch("/api/anthropic-key", { cache: "no-store" });
-  const result = await response.json();
-  return result.key;
-};
 
 const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = ({
   children,
