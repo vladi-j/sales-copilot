@@ -5,6 +5,7 @@ import localFont from "next/font/local";
 import { DeepgramContextProvider } from "./context/DeepgramContextProvider";
 import { MicrophoneContextProvider } from "./context/MicrophoneContextProvider";
 import AIAgentContextProvider from "./context/AIAgentContextProvider";
+import { AuthContextProvider } from "./context/AuthContextProvider";
 
 import "./globals.css";
 
@@ -46,13 +47,15 @@ export default function RootLayout({
           inter.className
         )}`}
       >
-        <MicrophoneContextProvider>
-          <DeepgramContextProvider>
-            <AIAgentContextProvider>
-              {children}
-            </AIAgentContextProvider>
-          </DeepgramContextProvider>
-        </MicrophoneContextProvider>
+        <AuthContextProvider>
+          <MicrophoneContextProvider>
+            <DeepgramContextProvider>
+              <AIAgentContextProvider>
+                {children}
+              </AIAgentContextProvider>
+            </DeepgramContextProvider>
+          </MicrophoneContextProvider>
+        </AuthContextProvider>
       </body>
     </html>
   );
