@@ -1,7 +1,7 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { getAnthropicKey } from "../util/getAnthropicKey";
 
-export async function correctLatvianText(text: string): Promise<string> {
+export async function correctText(text: string, language: string): Promise<string> {
   const apiKey = await getAnthropicKey();
   const chat = new ChatAnthropic({
     anthropicApiKey: apiKey,
@@ -9,14 +9,21 @@ export async function correctLatvianText(text: string): Promise<string> {
     temperature: 0.3,
   });
 
-  const prompt = `You are a Latvian language expert specializing in correcting speech-to-text output. 
+  const languageMap = {
+    lv: "Latvian",
+    et: "Estonian",
+    lt: "Lithuanian",
+    en: "English"
+  };
+
+  const prompt = `You are a ${languageMap[language as keyof typeof languageMap]} language expert specializing in correcting speech-to-text output. 
 Please improve the following text while maintaining its original meaning and context.
 Consider these specific instructions:
 
 1. Fix any misheard words while preserving the intended meaning
-2. Maintain proper Latvian grammar and punctuation
+2. Maintain proper ${languageMap[language as keyof typeof languageMap]} grammar and punctuation
 3. Preserve any company names, technical terms, or industry jargon
-4. Keep sentence structure natural for spoken Latvian
+4. Keep sentence structure natural for spoken ${languageMap[language as keyof typeof languageMap]}
 5. Do not add or remove significant content
 6. Ensure proper capitalization and spacing
 

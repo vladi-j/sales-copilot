@@ -6,6 +6,7 @@ import {
   useState,
   ReactNode,
   FunctionComponent,
+  useEffect,
 } from "react";
 import { ConversationChain } from "langchain/chains";
 import { ChatAnthropic } from "@langchain/anthropic";
@@ -20,6 +21,7 @@ interface AIAgentContextType {
   isProcessing: boolean;
   clearConversation: () => void;
   setInitialMeetingData: (data: InitialMeetingData) => void;
+  setLanguage: (language: string) => void;
 } 
 
 const AIAgentContext = createContext<AIAgentContextType | undefined>(undefined);
@@ -42,6 +44,7 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
   const [chain, setChain] = useState<ConversationChain | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [initialMeetingData, setInitialMeetingData] = useState<InitialMeetingData | null>(null);
+  const [language, setLanguage] = useState<string>('en');
 
   const initializeChain = async () => {
     if (chain) return chain;
@@ -61,8 +64,19 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
         outputKey: "response"
     });
 
-    // Create initial system message with meeting data if available
+    // Create initial system message with meeting data and language settings
     let systemPrompt = AIAgentSystemConfig;
+    
+    // Add language-specific instructions
+    const languageInstructions = {
+      en: "Respond in English.",
+      et: "Respond in Estonian. Use formal business Estonian.",
+      lv: "Respond in Latvian. Use formal business Latvian.",
+      lt: "Respond in Lithuanian. Use formal business Lithuanian."
+    };
+
+    systemPrompt += `\n\nLanguage Instructions: ${languageInstructions[language as keyof typeof languageInstructions]}`;
+
     if (initialMeetingData) {
       systemPrompt += `\n\nClient Information:
       Name: ${initialMeetingData.ownerFirstName || 'Not provided'} ${initialMeetingData.ownerLastName || ''}
@@ -126,6 +140,11 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
     setChain(null);
   };
 
+  // When language changes, clear the conversation to reinitialize with new language
+  useEffect(() => {
+    clearConversation();
+  }, [language]);
+
   return (
     <AIAgentContext.Provider
       value={{
@@ -133,6 +152,7 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
         isProcessing,
         clearConversation,
         setInitialMeetingData,
+        setLanguage,
       }}
     >
       {children}

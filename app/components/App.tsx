@@ -15,8 +15,9 @@ import {
 import { useAIAgent } from "../context/AIAgentContextProvider";
 import { InitialMeetingForm } from './InitialMeetingForm';
 import { InitialMeetingData } from '../types/forms';
-import { correctLatvianText } from '../services/textCorrection';
+import { correctText } from '../services/textCorrection';
 import { TextCorrectionToggle } from "./TextCorrectionToggle";
+import { LanguagePicker } from './LanguagePicker';
 
 // Add this type definition near the top of the file
 type Message = {
@@ -37,10 +38,11 @@ const App: () => JSX.Element = () => {
     useMicrophone();
   const captionTimeout = useRef<any>();
   const keepAliveInterval = useRef<any>();
-  const { processText, isProcessing, clearConversation, setInitialMeetingData } = useAIAgent();
+  const { processText, isProcessing, clearConversation, setInitialMeetingData, setLanguage } = useAIAgent();
   const [messages, setMessages] = useState<Message[]>([]);
   const [showForm, setShowForm] = useState(true);
   const [useTextCorrection, setUseTextCorrection] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
 
   const startConversation = async () => {
     await setupMicrophone();
@@ -96,7 +98,7 @@ const App: () => JSX.Element = () => {
     try {
       // If text correction is enabled, process the text first
       if (useTextCorrection) {
-        const correctedText = await correctLatvianText(textToSend);
+        const correctedText = await correctText(textToSend, selectedLanguage);
         textToSend = correctedText;
         
         // Add corrected message
@@ -104,7 +106,7 @@ const App: () => JSX.Element = () => {
           text: correctedText,
           isAI: false,
           timestamp: new Date(),
-          isCorrected: true // Add this flag to style corrections differently
+          isCorrected: true
         };
         setMessages(prev => [...prev, correctedMessage]);
       }
@@ -133,18 +135,23 @@ const App: () => JSX.Element = () => {
     startConversation();
   };
 
+  const handleLanguageChange = (newLanguage: string) => {
+    setSelectedLanguage(newLanguage);
+    setLanguage(newLanguage);  // This will trigger a conversation reset
+  };
+
   useEffect(() => {
     if (microphoneState === MicrophoneState.Ready && isConversationActive) {
       connectToDeepgram({
         model: "nova-2",
-        language: "en",
+        language: selectedLanguage,
         interim_results: true,
         smart_format: true,
         filler_words: true,
         utterance_end_ms: 3000,
       });
     }
-  }, [microphoneState, isConversationActive]);
+  }, [microphoneState, isConversationActive, selectedLanguage]);
 
   useEffect(() => {
     if (!microphone) return;
@@ -247,10 +254,16 @@ const App: () => JSX.Element = () => {
               )}
             </div>
             {!isConversationActive && (
-              <TextCorrectionToggle
-                checked={useTextCorrection}
-                onChange={setUseTextCorrection}
-              />
+              <>
+                <TextCorrectionToggle
+                  checked={useTextCorrection}
+                  onChange={setUseTextCorrection}
+                />
+                <LanguagePicker
+                  selectedLanguage={selectedLanguage}
+                  onChange={handleLanguageChange}
+                />
+              </>
             )}
             <div className="relative w-full h-full">
               <div className="absolute bottom-[8rem] inset-x-0 max-w-4xl mx-auto text-center">
