@@ -8,13 +8,14 @@ import {
   FunctionComponent,
   useEffect,
 } from "react";
-import { ConversationChain } from "langchain/chains";
 import { ChatAnthropic } from "@langchain/anthropic";
-import { BufferMemory } from "langchain/memory";
-import { PromptTemplate } from "@langchain/core/prompts";
-import { AIAgentSystemConfig } from "./AIAgentSystemConfig.config";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { AIAgentSystemConfig2 } from "./AIAgentSystemConfig.config";
 import { InitialMeetingData } from "../types/forms";
 import { getAnthropicKey } from "../util/getAnthropicKey";
+import { Runnable } from "@langchain/core/runnables";
+import { AIMessageChunk } from "@langchain/core/messages";
+import { EXAMPLE_PROMPT, SALES_ANALYSIS_PROMPT } from "../components/SalesAnalysis/SalesAnalysisPrompt.config";
 
 interface AIAgentContextType {
   processText: (text: string) => Promise<string>;
@@ -41,7 +42,12 @@ interface AIAgentContextProviderProps {
 const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = ({
   children,
 }) => {
-  const [chain, setChain] = useState<ConversationChain | null>(null);
+  const [chain, setChain] = useState<Runnable<{
+    input: string;
+    lastJsonResponse: string | null;
+    example: string;
+  }, AIMessageChunk> | null>(null);
+  const [lastJsonResponse, setLastJsonResponse] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [initialMeetingData, setInitialMeetingData] = useState<InitialMeetingData | null>(null);
   const [language, setLanguage] = useState<string>('en');
@@ -50,22 +56,20 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
     if (chain) return chain;
 
     const key = await getAnthropicKey();
-    const chat = new ChatAnthropic({
+    const llm = new ChatAnthropic({
       anthropicApiKey: key,
-      model: "claude-3-haiku-20240307",
+      model: "claude-3-5-haiku-20241022",
       temperature: 0.7,
       maxTokens: 1024,
+      maxRetries: 2,
+      clientOptions: {
+        defaultHeaders: {
+          "anthropic-beta": "prompt-caching-2024-07-31",
+        },
+      },
     });
-
-    const memory = new BufferMemory({
-        returnMessages: true,
-        memoryKey: "history",
-        inputKey: "input",
-        outputKey: "response"
-    });
-
     // Create initial system message with meeting data and language settings
-    let systemPrompt = AIAgentSystemConfig;
+    let systemPrompt = AIAgentSystemConfig2;
     
     // Add language-specific instructions
     const languageInstructions = {
@@ -101,20 +105,33 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
       ${initialMeetingData.otherInformation || 'Not provided'}`;
     }
 
-    const newChain = new ConversationChain({
-      llm: chat,
-      memory: memory,
-      prompt: new PromptTemplate({
-        template: `${systemPrompt}
-
-        Previous conversation:
-        {history}
-
-        Human: {input}
-        Assistant:`,
-        inputVariables: ["history", "input"],
-      }),
-    });
+    const prompt = ChatPromptTemplate.fromMessages([
+      {
+        role: "system",
+        content: [
+          {
+            type: "text",
+            text: systemPrompt,
+            // Tell Anthropic to cache this block
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: '{example}'
+          },
+          {
+            type: "text",
+            text: `{lastJsonResponse}. {input}`
+          }
+        ]
+      }
+    ]);
+    const newChain = prompt.pipe(llm);
 
     setChain(newChain);
     return newChain;
@@ -125,9 +142,22 @@ const AIAgentContextProvider: FunctionComponent<AIAgentContextProviderProps> = (
     try {
       const currentChain = await initializeChain();
       const response = await currentChain.invoke({
-        input: text,
+        example: EXAMPLE_PROMPT,
+        input: `${SALES_ANALYSIS_PROMPT}. Customer's speech: ${text}`,
+        lastJsonResponse: lastJsonResponse
       });
-      return response.response as string;
+      // Try to parse the response as JSON and store it if successful
+      try {
+        console.log("Response:", response.content);
+        const jsonResponse = JSON.parse(response.content as string);
+        setLastJsonResponse(jsonResponse);
+      } catch (e) {
+        // If parsing fails, it's not valid JSON, but we can continue
+        console.warn("Response was not valid JSON:", e);
+      }
+
+
+      return response.content as string;
     } catch (error) {
       console.error("Error processing text:", error);
       return "Error processing text. Please try again.";

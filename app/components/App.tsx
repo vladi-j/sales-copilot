@@ -18,6 +18,7 @@ import { InitialMeetingData } from '../types/forms';
 import { correctText } from '../services/textCorrection';
 import { TextCorrectionToggle } from "./TextCorrectionToggle";
 import { LanguagePicker } from './LanguagePicker';
+import Navigation from './Navigation';
 
 // Add this type definition near the top of the file
 type Message = {
@@ -226,6 +227,7 @@ const App: () => JSX.Element = () => {
 
   return (
     <>
+      <Navigation />
       <div className="flex h-full antialiased">
         <div className="flex flex-row h-full w-full overflow-x-hidden">
           <div className="flex flex-col flex-auto h-full">
