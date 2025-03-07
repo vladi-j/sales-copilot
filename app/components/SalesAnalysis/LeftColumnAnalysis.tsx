@@ -9,30 +9,30 @@ export const LeftColumnAnalysis: FC<Props> = ({ analysis }) => {
   if (!analysis) return null;
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg text-white h-full overflow-y-auto">      
+    <div className="h-full overflow-y-auto">      
       {/* Objections */}
       <div className="mb-6">
-        <h4 className="text-blue-400 font-medium mb-2">Objections:</h4>
+        <h4 className="text-[#007aff] font-medium text-sm mb-3">Objections</h4>
         {analysis.objections.map((objection, index) => (
-          <div key={index} className="mb-3 bg-gray-700 p-3 rounded">
-            <p className="text-gray-300 font-medium">Concern:</p>
-            <p className="text-gray-200 mb-2">{objection.concern}</p>
-            <p className="text-gray-300 font-medium">Response:</p>
-            <p className="text-gray-200">{objection.response}</p>
+          <div key={index} className="mb-4 bg-[#f2f2f7] p-4 rounded-xl">
+            <p className="text-[#1c1c1e] font-medium text-sm mb-1">Concern</p>
+            <p className="text-[#3a3a3c] mb-3 text-sm">{objection.concern}</p>
+            <p className="text-[#1c1c1e] font-medium text-sm mb-1">Response</p>
+            <p className="text-[#3a3a3c] text-sm">{objection.response}</p>
           </div>
         ))}
       </div>
 
       {/* Immediate Actions */}
       <div className="mb-6">
-        <h4 className="text-blue-400 font-medium mb-2">Immediate Actions:</h4>
-        <div className="bg-gray-700 p-3 rounded">
-          <p className="text-gray-300 font-medium">Question to Ask:</p>
-          <p className="text-gray-200 mb-2">{analysis.immediateActions.questionToAsk}</p>
-          <p className="text-gray-300 font-medium">Topic to Emphasize:</p>
-          <p className="text-gray-200 mb-2">{analysis.immediateActions.topicToEmphasize}</p>
-          <p className="text-gray-300 font-medium">Suggested Close:</p>
-          <p className="text-gray-200">{analysis.immediateActions.suggestedClose}</p>
+        <h4 className="text-[#007aff] font-medium text-sm mb-3">Immediate Actions</h4>
+        <div className="bg-[#f2f2f7] p-4 rounded-xl">
+          <p className="text-[#1c1c1e] font-medium text-sm mb-1">Question to Ask</p>
+          <p className="text-[#3a3a3c] mb-3 text-sm">{analysis.immediateActions.questionToAsk}</p>
+          <p className="text-[#1c1c1e] font-medium text-sm mb-1">Topic to Emphasize</p>
+          <p className="text-[#3a3a3c] mb-3 text-sm">{analysis.immediateActions.topicToEmphasize}</p>
+          <p className="text-[#1c1c1e] font-medium text-sm mb-1">Suggested Close</p>
+          <p className="text-[#3a3a3c] text-sm">{analysis.immediateActions.suggestedClose}</p>
         </div>
       </div>
     </div>

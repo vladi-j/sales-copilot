@@ -222,26 +222,26 @@ const SuggestionsPage: React.FC = () => {
   }, [microphoneState, connectionState]);
 
   return (
-    <div className="flex flex-col h-screen antialiased bg-gray-900">
+    <div className="flex flex-col h-screen antialiased bg-[#f5f5f7]">
       {/* Control buttons */}
-      <div className="flex justify-center gap-4 mb-4 pt-4">
+      <div className="flex justify-center gap-4 mb-6 pt-8">
         <button
           onClick={isConversationActive ? stopConversation : startConversation}
-          className={`px-6 py-2 rounded-lg font-semibold ${
+          className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-300 shadow-sm ${
             isConversationActive
-              ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
+              ? "bg-[#ff3b30] hover:bg-[#e02e24] text-white"
+              : "bg-[#007aff] hover:bg-[#0062cc] text-white"
           }`}
         >
-          {isConversationActive ? "Stop Conversation" : "Start Conversation"}
+          {isConversationActive ? "End Conversation" : "Start Conversation"}
         </button>
         {isConversationActive && (
           <button
             onClick={togglePause}
-            className={`px-6 py-2 rounded-lg font-semibold ${
+            className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-300 shadow-sm ${
               isPaused
-                ? "bg-green-600 hover:bg-green-700 text-white"
-                : "bg-yellow-600 hover:bg-yellow-700 text-white"
+                ? "bg-[#34c759] hover:bg-[#28a745] text-white"
+                : "bg-[#ff9500] hover:bg-[#e68600] text-white"
             }`}
           >
             {isPaused ? "Resume" : "Pause"}
@@ -251,22 +251,26 @@ const SuggestionsPage: React.FC = () => {
       
       {/* Settings options when conversation is not active */}
       {!isConversationActive && (
-        <div className="flex flex-col items-center gap-4 mb-4 w-full max-w-2xl mx-auto px-4">
-          <div className="w-full">
+        <div className="flex flex-col items-center gap-6 mb-8 w-full max-w-2xl mx-auto px-6 animate-fadeIn">
+          <div className="w-full bg-white rounded-2xl shadow-sm p-6">
             <SalesScript 
               initialScript={salesScript} 
               onChange={setSalesScript} 
             />
           </div>
-          <div className="flex gap-4">
-            <TextCorrectionToggle
-              checked={useTextCorrection}
-              onChange={setUseTextCorrection}
-            />
-            <LanguagePicker
-              selectedLanguage={selectedLanguage}
-              onChange={handleLanguageChange}
-            />
+          <div className="flex flex-col md:flex-row gap-6 w-full">
+            <div className="flex-1 bg-white rounded-2xl shadow-sm p-6">
+              <TextCorrectionToggle
+                checked={useTextCorrection}
+                onChange={setUseTextCorrection}
+              />
+            </div>
+            <div className="flex-1 bg-white rounded-2xl shadow-sm p-6">
+              <LanguagePicker
+                selectedLanguage={selectedLanguage}
+                onChange={handleLanguageChange}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -274,27 +278,44 @@ const SuggestionsPage: React.FC = () => {
       {/* Caption display */}
       <div className="relative w-full">
         <div className="absolute bottom-4 inset-x-0 max-w-4xl mx-auto text-center z-10">
-          {isConversationActive && caption && <span className="bg-black/70 p-4 rounded text-white">{caption}</span>}
+          {isConversationActive && caption && (
+            <span className="bg-[#1c1c1e]/80 backdrop-blur-md p-4 rounded-xl text-white font-medium transition-opacity duration-300">
+              {caption}
+            </span>
+          )}
         </div>
       </div>
       
       {/* Main content area - 3 column layout */}
       {isConversationActive && (
-        <div className="flex flex-1 gap-4 w-full max-w-[1800px] mx-auto px-4 overflow-hidden">
+        <div className="flex flex-1 gap-6 w-full max-w-[1800px] mx-auto px-6 pb-6 overflow-hidden animate-slideUp">
           {/* Left column - Objections, Immediate Actions, Critical Attention */}
           <div className="w-1/4 flex flex-col">
-            <LeftColumnAnalysis analysis={currentAnalysis || null} />
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
+              <div className="p-4 bg-[#f2f2f7] border-b border-[#e5e5ea]">
+                <h3 className="text-[#1c1c1e] font-medium">Analysis</h3>
+              </div>
+              <div className="p-4 flex-1 overflow-y-auto">
+                <LeftColumnAnalysis analysis={currentAnalysis || null} />
+              </div>
+            </div>
             {isAnalyzing && (
-              <div className="text-center text-gray-400 mt-4 bg-gray-800 p-2 rounded">
-                Analyzing conversation...
+              <div className="text-center text-[#8e8e93] mt-4 bg-white p-3 rounded-2xl shadow-sm">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin h-4 w-4 border-2 border-[#007aff] border-t-transparent rounded-full mr-2"></div>
+                  Analyzing conversation...
+                </div>
               </div>
             )}
           </div>
           
           {/* Center column - Speaker 2 (Customer) transcript */}
           <div className="w-2/4 flex flex-col">
-            <div className="flex-1 flex flex-col bg-gray-800 rounded-lg">
-              <div className="p-4 border-t border-gray-700">
+            <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="p-4 bg-[#f2f2f7] border-b border-[#e5e5ea]">
+                <h3 className="text-[#1c1c1e] font-medium">Conversation</h3>
+              </div>
+              <div className="p-6 flex-1 overflow-y-auto">
                 {/* Sales Script Component */}
                 <SalesScript 
                   initialScript={salesScript} 
@@ -303,23 +324,69 @@ const SuggestionsPage: React.FC = () => {
                 />
                 
                 {/* Customer Transcript */}
-                <div className="text-white text-sm font-medium mb-2">Customer Transcript</div>
-                <textarea
-                  value={speakerTexts[1]}
-                  readOnly
-                  className="h-100 w-full p-4 bg-gray-700 text-white rounded-lg min-h-[100px] resize-none"
-                  placeholder="Customer transcript will appear here..."
-                />
+                <div className="text-[#1c1c1e] text-sm font-medium mb-2 mt-6">Customer Transcript</div>
+                <div className="bg-[#f2f2f7] rounded-xl p-4 min-h-[100px]">
+                  <p className="text-[#1c1c1e]">
+                    {speakerTexts[1] || "Customer transcript will appear here..."}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
           
           {/* Right column - Current Focus, Situation, Stakeholders */}
           <div className="w-1/4 flex flex-col">
-            <RightColumnAnalysis analysis={currentAnalysis || null} />
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
+              <div className="p-4 bg-[#f2f2f7] border-b border-[#e5e5ea]">
+                <h3 className="text-[#1c1c1e] font-medium">Insights</h3>
+              </div>
+              <div className="p-4 flex-1 overflow-y-auto">
+                <RightColumnAnalysis analysis={currentAnalysis || null} />
+              </div>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Add Apple-style animations */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .animate-slideUp {
+          animation: slideUp 0.5s ease-out forwards;
+        }
+        
+        /* Apple-style scrollbar */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: #c1c1c4;
+          border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: #a1a1a6;
+        }
+      `}</style>
     </div>
   );
 };
